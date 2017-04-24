@@ -1,0 +1,8 @@
+c:\users\monborg\documents\visual studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\bin\Debug\ConsoleApplicationClient.exe.config
+C:\Users\MonBorg\Documents\Visual Studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\obj\Debug\ConsoleApplicationClient.csprojResolveAssemblyReference.cache
+C:\Users\MonBorg\Documents\Visual Studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\bin\Debug\ConsoleApplicationClient.exe
+C:\Users\MonBorg\Documents\Visual Studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\bin\Debug\ConsoleApplicationClient.pdb
+C:\Users\MonBorg\Documents\Visual Studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\obj\Debug\ConsoleApplicationClient.exe
+C:\Users\MonBorg\Documents\Visual Studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\obj\Debug\ConsoleApplicationClient.pdb
+c:\users\monborg\documents\visual studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\bin\Debug\ConsoleApplication1.exe
+c:\users\monborg\documents\visual studio 2015\Projects\ConsoleApplicationClient\ConsoleApplicationClient\bin\Debug\ConsoleApplication1.pdb
