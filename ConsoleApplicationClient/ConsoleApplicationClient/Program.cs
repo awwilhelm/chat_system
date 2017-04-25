@@ -52,7 +52,7 @@ namespace ConsoleApplicationClient
             readData = "Conected to Chat Server ...";
             msg();
             //String s = Console.ReadLine();
-            clientSocket.Connect("127.0.0.1", 8888);
+            clientSocket.Connect("127.0.0.1", 19278);
             serverStream = clientSocket.GetStream();
 
             //byte[] outStream = System.Text.Encoding.ASCII.GetBytes(s + "$");

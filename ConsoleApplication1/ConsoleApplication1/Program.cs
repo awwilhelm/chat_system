@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Collections;
 using System.Threading;
+using System.IO;
 
 namespace ConsoleApplication1
 {
@@ -15,11 +16,14 @@ namespace ConsoleApplication1
         public static Dictionary<string, string> userCredentials = new Dictionary<string, string>();
         public static Dictionary<string, handleClinet> currentLoggedInUsers = new Dictionary<string, handleClinet>();
         static TcpListener serverSocket;
+        public static int maxClients = 3;
+
+        public static string filename = "passwordStuff.txt";
         static void Main(string[] args)
         {
             initializeUserCrediential();
             Console.CancelKeyPress += new ConsoleCancelEventHandler(myHandler);
-            serverSocket = new TcpListener(IPAddress.Parse("127.0.0.1"), 8888);
+            serverSocket = new TcpListener(IPAddress.Parse("127.0.0.1"), 19278);
             TcpClient clientSocket = default(TcpClient);
             int counter = 0;
 
@@ -30,14 +34,8 @@ namespace ConsoleApplication1
             {
                 counter += 1;
                 clientSocket = serverSocket.AcceptTcpClient();
-
-                //byte[] bytesFrom = new byte[10025];
-                //string dataFromClient = null;
-                NetworkStream networkStream = clientSocket.GetStream();
                 
-                //networkStream.Read(bytesFrom, 0, 10025);
-                //dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
-                //dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
+                NetworkStream networkStream = clientSocket.GetStream();
 
                 currentlyLoggedInHash.Add(""+counter, clientSocket);
                 
@@ -53,11 +51,31 @@ namespace ConsoleApplication1
 
         static void initializeUserCrediential()
         {
-            userCredentials.Add("1", "1");
-            userCredentials.Add("2", "2");
-            userCredentials.Add("3", "3");
-            userCredentials.Add("admin", "admin");
-            userCredentials.Add("lastTest", "jk");
+            if (!File.Exists(filename))
+            {
+                string[] names = new string[] { "(Tom, Tom11)", "(David, David22)", "(Beth, Beth33)", "(John, John44)" };
+                using (StreamWriter sw = new StreamWriter(filename))
+                {
+
+                    foreach (string s in names)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+
+            // Read and show each line from the file.
+            string line = "";
+            using (StreamReader sr = new StreamReader(filename))
+            {
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string username, pass;
+                    username = line.Substring(1, line.IndexOf(',') - 1);
+                    pass = line.Substring(line.IndexOf(',') + 2, line.Length - (line.IndexOf(',')+2) - 1);
+                    userCredentials.Add(username, pass);
+                }
+            }
         }
 
         public static void broadcast(string msg, string uName, bool flag, string clNo)
@@ -66,10 +84,6 @@ namespace ConsoleApplication1
             {
                 return;
             }
-            //foreach (DictionaryEntry Item in currentlyLoggedInHash)
-            //{
-            //    broadcastToUser(msg, uName, flag, (TcpClient) Item.Value);
-            //}
             foreach (KeyValuePair<string, handleClinet> Item in currentLoggedInUsers)
             {
                 if (clNo == null)
@@ -118,15 +132,6 @@ namespace ConsoleApplication1
         {
             
             serverSocket.Stop();
-            // Set the Cancel property to true to prevent the process from terminating.
-            //Console.WriteLine("Setting the Cancel property to true...");
-
-            //args.Cancel = true;
-            //stillAlive = false;
-
-            // Announce the new value of the Cancel property.
-            //Console.WriteLine("  Cancel property: {0}", args.Cancel);
-            //Console.WriteLine("The read operation will resume...\n");
         }
     }//end Main class
 
@@ -193,18 +198,30 @@ namespace ConsoleApplication1
                     Console.WriteLine(ex.ToString());
                 }
             }//end while
-            Program.broadcast(clNo + " Left chat room ", clNo, false, null);
-            Program.currentlyLoggedInHash.Remove(id);
         }//end doChat
 
         bool validLogin(string user, string pass)
         {
-            if(Program.userCredentials.ContainsKey(user))
+            if (Program.currentLoggedInUsers.Count < Program.maxClients)
             {
-                if(Program.userCredentials[user].Equals(pass))
+                if (Program.userCredentials.ContainsKey(user))
                 {
-                    return true;
+                    if (Program.currentLoggedInUsers.ContainsKey(user) == false)
+                    {
+                        if (Program.userCredentials[user].Equals(pass))
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        Program.broadcastToUser("User is alread logged in.", clNo, false, clientSocket, false);
+                    }
                 }
+            }
+            else
+            {
+                Program.broadcastToUser("Login max of " + Program.maxClients + " has been met. Try again later.", clNo, false, clientSocket, false);
             }
             return false;
         }
@@ -258,17 +275,69 @@ namespace ConsoleApplication1
                         }
                         else
                         {
-                            if (Program.currentLoggedInUsers.ContainsKey(input[1]))
+                            if (input[1].Equals(clNo))
                             {
-                                //TODO make a broadcast that sends to 1 person
-                                string[] dataArray = input.Where((x, index) => index > 1).ToArray();
-                                string data = string.Join(" ", dataArray);
-                                Program.broadcastToUser(data, clNo, true, Program.currentLoggedInUsers[input[1]].clientSocket, true);
-                                Console.WriteLine(clNo + " (" + input[1] + "): " + data);
+                                Program.broadcastToUser("You can't send a pm to yourself.", clNo, false, clientSocket, false);
                             }
                             else
                             {
-                                Program.broadcastToUser("This user doesn't exist or isn't online", clNo, false, clientSocket, false);
+                                if (Program.currentLoggedInUsers.ContainsKey(input[1]))
+                                {
+                                    //TODO make a broadcast that sends to 1 person
+                                    string[] dataArray = input.Where((x, index) => index > 1).ToArray();
+                                    string data = string.Join(" ", dataArray);
+                                    Program.broadcastToUser(data, clNo, true, Program.currentLoggedInUsers[input[1]].clientSocket, true);
+                                    Console.WriteLine(clNo + " (" + input[1] + "): " + data);
+                                }
+                                else
+                                {
+                                    Program.broadcastToUser("This user doesn't exist or isn't online", clNo, false, clientSocket, false);
+                                }
+                            }
+                        }
+                    }
+                    else if(input[0].Equals("newuser"))
+                    {
+                        if (clNo != null)
+                        {
+                            Program.broadcastToUser("Can't be logged in.", clNo, false, clientSocket, false);
+                        }
+                        else
+                        {
+                            if (input[1].Length < 32)
+                            {
+                                if (input[2].Length > 4 && input[2].Length < 8)
+                                {
+                                    bool taken = false;
+                                    foreach(KeyValuePair<string, string> user in Program.userCredentials)
+                                    {
+                                        if(user.Key.Equals(input[1]))
+                                        {
+                                            taken = true;
+                                        }
+                                    }
+                                    if (taken == false)
+                                    {
+                                        using (StreamWriter sw = new StreamWriter(Program.filename, true))
+                                        {
+                                            sw.WriteLine("(" + input[1] + ", " + input[2] + " )");
+                                        }
+
+                                        Program.userCredentials.Add(input[1], input[2]);
+                                    }
+                                    else
+                                    {
+                                        Program.broadcastToUser("That username was already taken.", clNo, false, clientSocket, false);
+                                    }
+                                }
+                                else
+                                {
+                                    Program.broadcastToUser("Pass needs to be > 4 and < 8", clNo, false, clientSocket, false);
+                                }
+                            }
+                            else
+                            {
+                                Program.broadcastToUser("Name needs to be less than 32 characters.", clNo, false, clientSocket, false);
                             }
                         }
                     }
@@ -294,8 +363,12 @@ namespace ConsoleApplication1
                             //TODO stops thread and disconnects connections
                             if (Program.currentLoggedInUsers.ContainsKey(clNo))
                             {
+                                Program.broadcast(clNo + " Left chat room.", clNo, false, null);
+                                Console.WriteLine(clNo + " Left chat room.");
+                                Program.currentlyLoggedInHash.Remove(id);
                                 Program.currentLoggedInUsers.Remove(clNo);
                                 clNo = null;
+
                             }
                         }
                     }
