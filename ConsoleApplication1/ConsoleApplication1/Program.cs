@@ -21,6 +21,7 @@ namespace ConsoleApplication1
         public static string filename = "passwordStuff.txt";
         static void Main(string[] args)
         {
+            //Sets up the server
             initializeUserCrediential();
             Console.CancelKeyPress += new ConsoleCancelEventHandler(myHandler);
             serverSocket = new TcpListener(IPAddress.Parse("127.0.0.1"), 19278);
@@ -30,6 +31,7 @@ namespace ConsoleApplication1
             serverSocket.Start();
             Console.WriteLine("Chat Server Started ....");
             counter = 0;
+            //Looks for new clients that connect
             while ((true))
             {
                 counter += 1;
@@ -49,6 +51,7 @@ namespace ConsoleApplication1
             Console.ReadLine();
         }
 
+        //If no file exists it creates a basic starting file.  Otherwise it will get the credentials from an external file
         static void initializeUserCrediential()
         {
             if (!File.Exists(filename))
@@ -78,12 +81,15 @@ namespace ConsoleApplication1
             }
         }
 
+        //Sends a message to all users
         public static void broadcast(string msg, string uName, bool flag, string clNo)
         {
             if(msg.Length == 0)
             {
                 return;
             }
+
+            //Goes through entire list and sends to all users that are logged in
             foreach (KeyValuePair<string, handleClinet> Item in currentLoggedInUsers)
             {
                 if (clNo == null)
@@ -101,6 +107,7 @@ namespace ConsoleApplication1
 
         }  //end broadcast function
 
+        //This sends from the server to a single client
         public static void broadcastToUser(string msg, string uName, bool flag, TcpClient tcpClient, bool priv)
         {
             TcpClient broadcastSocket;
@@ -145,6 +152,7 @@ namespace ConsoleApplication1
         public Thread ctThread;
         public bool killThisThread = false;
 
+        //Instantiates all of the variables when connected
         public void startClient(TcpClient inClientSocket, string id, Hashtable cList)
         {
             this.clientSocket = inClientSocket;
@@ -154,6 +162,7 @@ namespace ConsoleApplication1
             ctThread.Start();
         }
 
+        //Manages recieving a message from the client
         private void doChat()
         {
             int requestCount = 0;
@@ -200,6 +209,7 @@ namespace ConsoleApplication1
             }//end while
         }//end doChat
 
+        //Varifies if the username and password that was sent to the server is correct
         bool validLogin(string user, string pass)
         {
             if (Program.currentLoggedInUsers.Count < Program.maxClients)
@@ -226,17 +236,18 @@ namespace ConsoleApplication1
             return false;
         }
 
+        //Manages all of the commands
         void userCommands(string[] input)
         {
             if (input.Length > 1)
             {
                 if (input.Length >= 3)
                 {
+                    //If the user wants to login
                     if (input[0].Equals("login"))
                     {
                         if (validLogin(input[1], input[2]))
                         {
-                            //TODO add to list of valid users that can push
                             Program.currentLoggedInUsers.Add(input[1], this);
                             clNo = input[1];
                             Program.broadcastToUser("login confirmed", clNo, false, clientSocket, true);
@@ -246,9 +257,10 @@ namespace ConsoleApplication1
                             Program.broadcastToUser("You entered the incorrect credentials", clNo, false, clientSocket, false);
                         }
                     }
+
+                    //If the user wants to send all
                     else if (input[0].Equals("send") && input[1].Equals("all"))
                     {
-                        //TODO checks to see if logged in and if so broadcast
                         if (clNo == null)
                         {
                             Program.broadcastToUser("Denied. Please login first.", clNo, false, clientSocket, false);
@@ -267,6 +279,8 @@ namespace ConsoleApplication1
                             }
                         }
                     }
+
+                    //If the user wants to send to a single user
                     else if (input[0].Equals("send"))
                     {
                         if (clNo == null)
@@ -283,7 +297,6 @@ namespace ConsoleApplication1
                             {
                                 if (Program.currentLoggedInUsers.ContainsKey(input[1]))
                                 {
-                                    //TODO make a broadcast that sends to 1 person
                                     string[] dataArray = input.Where((x, index) => index > 1).ToArray();
                                     string data = string.Join(" ", dataArray);
                                     Program.broadcastToUser(data, clNo, true, Program.currentLoggedInUsers[input[1]].clientSocket, true);
@@ -296,6 +309,8 @@ namespace ConsoleApplication1
                             }
                         }
                     }
+
+                    //If the user wants to make a new user
                     else if(input[0].Equals("newuser"))
                     {
                         if (clNo != null)
@@ -353,14 +368,16 @@ namespace ConsoleApplication1
                 {
                     if (Program.currentLoggedInUsers.ContainsKey(clNo))
                     {
+
+                        //If the user wants to know who is all logged in
                         if (input[0].Equals("who"))
                         {
-                            //TODO print out all users that are logged in
                             Program.broadcastToUser(string.Join(", ", Program.currentLoggedInUsers.Keys), clNo, false, clientSocket, false);
                         }
+
+                        //Logs the client out so they no longer recieve messages.
                         else if (input[0].Equals("logout"))
                         {
-                            //TODO stops thread and disconnects connections
                             if (Program.currentLoggedInUsers.ContainsKey(clNo))
                             {
                                 Program.broadcast(clNo + " Left chat room.", clNo, false, null);

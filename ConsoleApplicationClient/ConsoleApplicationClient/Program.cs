@@ -29,6 +29,7 @@ namespace ConsoleApplicationClient
             }
         }
 
+        //Sends the information that the user enters to the client
         private void button1_Click()
         {
             String s = Console.ReadLine();
@@ -47,17 +48,13 @@ namespace ConsoleApplicationClient
             }
         }
 
+        //Connects the user to the server.  Does not log in the user
         private void button2_Click()
         {
             readData = "Conected to Chat Server ...";
             msg();
-            //String s = Console.ReadLine();
             clientSocket.Connect("127.0.0.1", 19278);
             serverStream = clientSocket.GetStream();
-
-            //byte[] outStream = System.Text.Encoding.ASCII.GetBytes(s + "$");
-            //serverStream.Write(outStream, 0, outStream.Length);
-            //serverStream.Flush();
 
             ctThread = new Thread(getMessage);
             ctThread.Start();
@@ -65,6 +62,7 @@ namespace ConsoleApplicationClient
             connectedToServer = true;
         }
 
+        //Recieves messages from the server
         private void getMessage()
         {
             int read = 1;
@@ -95,13 +93,10 @@ namespace ConsoleApplicationClient
             }
         }
 
+        //Prints the current readData message
         private void msg()
         {
-            //if (this.InvokeRequired)
-            //    this.Invoke(new MethodInvoker(msg));
-            //else
             Console.WriteLine(readData);
-                //textBox1.Text = textBox1.Text + Environment.NewLine + " >> " + readData;
         }
 
         protected static void myHandler(object sender, ConsoleCancelEventArgs args)
@@ -111,15 +106,9 @@ namespace ConsoleApplicationClient
                 ctThread.Abort();
             }
             clientSocket.Close();
-            // Set the Cancel property to true to prevent the process from terminating.
-            //Console.WriteLine("Setting the Cancel property to true...");
             
             //args.Cancel = true;
             stillAlive = false;
-
-            // Announce the new value of the Cancel property.
-            //Console.WriteLine("  Cancel property: {0}", args.Cancel);
-            //Console.WriteLine("The read operation will resume...\n");
         }
 
     }
